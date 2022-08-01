@@ -1,0 +1,28 @@
+#Convert .gff3 from funannotate pipeline to .attributes for Pangloss pipeline - adapted from script created by Ryan Gourlie for FunGap
+
+#get lines for genes only (i.e. no exons, cds, mrna)
+grep "gene" AUS_1A4_predictions.gff3 > AUS_1A4.att1
+
+#remove columns for source (2), feature (3), score (6), sense (7), strand (8)
+awk '{print $1,$9,$4,$5}' AUS_1A4.att1 > AUS_1A4.att2
+
+#replace ID= with isolate| , need to change isolate name
+sed 's/ID=/AUS_1A4|/g' AUS_1A4.att2 > AUS_1A4.att3
+
+#add dummy column for annotation
+sed 's/$/\t./' AUS_1A4.att3 > AUS_1A4.att4
+
+#add isolate identifier column
+sed 's/$/\tAUS_1A4/' AUS_1A4.att4 > AUS_1A4.att5
+
+#convert spaces to tabs 
+tr ' ' \\t < AUS_1A4.att5 >  AUS_1A4.att6
+
+#convert the id column to match prot db
+sed 's/\(|FUN_......\)/\1.t1/g' AUS_1A4.att6 > AUS_1A4.att7
+
+#remove semi-colon
+sed 's/;//g' AUS_1A4.att7 > AUS_1A4.attributes
+
+#remove intermediate files
+rm AUS_1A4.att1 AUS_1A4.att2 AUS_1A4.att3 AUS_1A4.att4 AUS_1A4.att5 AUS_1A4.att6 AUS_1A4.att7

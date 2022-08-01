@@ -1,0 +1,38 @@
+#!/bin/sh
+
+#SBATCH --qos "castles"
+#SBATCH --account mcdonamc-ztritici-pop-gen
+#SBATCH --ntasks 40
+#SBATCH --time 96:00:0
+#SBATCH --mem 12GB
+#SBATCH --mail-type FAIL
+#SBATCH --output=test_%A_a.out
+#SBATCH --error=test_%A_%a.err
+#SBATCH --array=1-8
+
+
+set -e
+
+cd /rds/projects/m/mcdonamc-ztritici-pop-gen/pangenome_ztritici/funannotate_databases/
+
+module purge; module load bluebear
+module load funannotate
+module load prokka
+module unload GeneMark-ET/4.61-GCCcore-8.3.0
+module unload tRNAscan-SE/2.0.6-GCCcore-8.3.0
+export FUNANNOTATE_DB=/rds/projects/m/mcdonamc-ztritici-pop-gen/pangenome_ztritici/funannotate_databases
+export GENEMARK_PATH=/rds/homes/c/cxs210/bin/GeneMark-ET/4.61-GCCcore-8.3.0/
+
+n=$SLURM_ARRAY_TASK_ID
+ISOLATE=$(sed -n "$n"p /rds/projects/m/mcdonamc-ztritici-pop-gen/pangenome_ztritici/spades_assemblies/remaining_isolate_names.txt)
+
+INDIR="/rds/projects/m/mcdonamc-ztritici-pop-gen/pangenome_ztritici/spades_assemblies/masked_assemblies/"
+OUTDIR="/rds/projects/m/mcdonamc-ztritici-pop-gen/pangenome_ztritici/spades_assemblies/predictions/${ISOLATE}_predictions/"
+
+INPUT_PATH="${INDIR}${ISOLATE}_masked_scaffolds.fasta"
+OUTPUT_PATH="${OUTDIR}${ISOLATE}_predictions"
+
+mkdir "/rds/projects/m/mcdonamc-ztritici-pop-gen/pangenome_ztritici/spades_assemblies/predictions/${ISOLATE}_predictions/"
+cd "/rds/projects/m/mcdonamc-ztritici-pop-gen/pangenome_ztritici/spades_assemblies/predictions/${ISOLATE}_predictions/"
+
+funannotate predict -i $INPUT_PATH -o $OUTPUT_PATH -s verticillium_longisporum1 --cpus 40
